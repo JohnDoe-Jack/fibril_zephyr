@@ -10,7 +10,7 @@ Zephyr のバージョンは `west.yml` で v4.4.1 に固定してある。
 
 ## 対応ボード
 
-いずれも STM32 系である。
+STM32 系の自作ボードと Waveshare RP2350-CAN に対応する。
 
 | ボード | `west build -b` に渡す名前 | MCU | CAN | 文書 |
 | --- | --- | --- | --- | --- |
@@ -18,11 +18,14 @@ Zephyr のバージョンは `west.yml` で v4.4.1 に固定してある。
 | RoboMaster Mini V1 | `fibril_robomaster_miniv1` | STM32G474VE | FDCAN1 | [doc](boards/fibril/robomaster_miniv1/doc/index.rst) |
 | RoboMaster Mini V3 | `fibril_robomaster_miniv3` | STM32G474ME（LQFP80） | FDCAN1 | [doc](boards/fibril/robomaster_miniv3/doc/index.rst) |
 | RoboMaster Mini V4 | `fibril_robomaster_miniv4` | STM32G474VE | FDCAN1 / 2 / 3 | [doc](boards/fibril/robomaster_miniv4/doc/index.rst) |
+| Waveshare RP2350-CAN | `waveshare_rp2350_can/rp2350a/m33` | RP2350A / Cortex-M33 | XL2515（Classic CAN、最大 1 Mbps） | [doc](boards/waveshare/rp2350_can/doc/index.rst) |
 | RC26 MainAir V01 | `fibril_rc26_mainair_v01` | STM32G474RE（LQFP64） | FDCAN2 / 3 | [doc](boards/fibril/rc26_mainair_v01/doc/index.rst) |
 
 CAN の欄は、そのボードの devicetree がピンとクロックを設定しているコントローラである。
 STM32G4 のボードは FDCAN を無効のままにしてあり、有効化とビットレートの指定は使う側の overlay に委ねている。
-CanMotor の MCP2517FD は既定で有効である。
+CanMotor の MCP2517FD と RP2350-CAN の XL2515 は既定で有効である。
+RP2350-CAN は RTT をコンソールとログに使い、UART0 をアプリケーション用に空けてある。
+最小ビルドと実機確認は [ボード文書](boards/waveshare/rp2350_can/doc/index.rst) を参照する。
 
 CanMotor と RoboMaster Mini の 4 枚は、ピン割り当てを先行ファームウェア CanMotorMbed の同名ターゲットから移してある。
 既存のハードウェアを配線変更なしで動かせる。
@@ -73,7 +76,8 @@ west flash
 | `rc26-air-chain` | RC26 MainAir V01 | 同じ電磁弁に加え、CAN0 と CAN1 を 1 本の論理バスに繋ぐ |
 | `rc26-air-usb` | RC26 MainAir V01 | 同じ電磁弁に加え、CAN0 を gs_usb で PC に見せる |
 
-ボード持ち込みの動作確認には `app/` を使う。fibril_can を使わない。
+STM32 ボード持ち込みの動作確認には `app/` を使う。fibril_can を使わない。
+RP2350-CAN は `tests/boards/rp2350_can` または Zephyr の `hello_world` を使う。
 
 ```shell
 west build -b <ボード名> app

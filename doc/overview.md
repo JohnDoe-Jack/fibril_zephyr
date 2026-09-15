@@ -16,6 +16,8 @@ Zephyr 本体はこのリポジトリの外に clone され、`west.yml` がそ�
 ├── .west/config                  manifest = fibril_zephyr/west.yml、zephyr base = zephyr
 ├── zephyr/                       Zephyr 本体（v4.4.1 に固定）
 ├── modules/
+│   ├── hal/rpi_pico              RP2350 の HAL
+│   ├── debug/segger              RTT console / logging
 │   ├── hal/stm32                 STM32 の HAL
 │   ├── hal/cmsis_6               Cortex-M ポートが要求する CMSIS
 │   ├── lib/cmsis-dsp             CMSIS-DSP
@@ -60,13 +62,14 @@ codegen が決めるブロック配列の並びはワイヤの契約の一部で
 | `apps/` | 実機に焼くアプリケーション。`apps/node/` が fibril_can スレーブ |
 | `app/` | ボード持ち込みの動作確認用アプリケーション |
 | `snippets/` | 焼く単位ごとの schema、Kconfig、overlay の組 |
+| `boards/waveshare/` | Waveshare RP2350-CAN のボード定義（Cortex-M33、Classic CAN） |
 | `boards/fibril/` | 自作ボードの定義。ボードごとの詳細は各 `doc/index.rst` |
 | `drivers/` | out-of-tree ドライバの実装 |
 | `dts/bindings/` | 上記ドライバと機能の devicetree binding |
 | `include/` | 公開ヘッダ。ドライバクラスの API はここが正本 |
 | `lib/` | out-of-tree ライブラリ。`lib/fibril_can_node/` にブロック型の実装、`lib/fcan_transport/` にバスへの繋ぎ方 |
 | `samples/` | ドライバ単体および fibril_can と組み合わせたサンプル |
-| `tests/` | Twister から走る ztest |
+| `tests/` | Twister から走る ztest と実機用ボードテストのビルド確認 |
 | `scripts/` | west の拡張コマンドと runner |
 | `doc/` | このドキュメントと Doxygen の設定 |
 

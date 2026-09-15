@@ -1,0 +1,47 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2025-2026 TiaC Systems
+ * SPDX-License-Identifier: Apache-2.0
+ * Modified for fibril_zephyr; see doc/index.rst for provenance and porting notes.
+ */
+
+#include <zephyr/dt-bindings/pinctrl/rpi-pico-rp2350a-pinctrl.h>
+
+&pinctrl {
+	uart0_default: uart0_default {
+		group0 {
+			pinmux = <UART0_TX_P0>;
+		};
+		group1 {
+			pinmux = <UART0_RX_P1>;
+			input-enable;
+		};
+	};
+
+	uart0_default_hwflow: uart0_default_hwflow {
+		group0 {
+			pinmux = <UART0_TX_P0>, <UART0_RTS_P3>;
+		};
+		group1 {
+			pinmux = <UART0_RX_P1>, <UART0_CTS_P2>;
+			input-enable;
+		};
+	};
+
+	spi1_can: spi1_can {
+		group0 {
+			/* GP9 is controlled by cs-gpios, not the PL022 hardware CS. */
+			pinmux = <SPI1_SCK_P10>, <SPI1_TX_P11>;
+		};
+		group1 {
+			pinmux = <SPI1_RX_P12>;
+			input-enable;
+		};
+	};
+
+	pwm_pico_default: pwm_pico_default {
+		group0 {
+			pinmux = <PWM_2A_P20>, <PWM_2B_P21>,
+				 <PWM_3A_P22>, <PWM_4B_P25>;
+		};
+	};
+};

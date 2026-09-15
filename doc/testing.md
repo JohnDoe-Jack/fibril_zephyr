@@ -50,7 +50,7 @@ FCAN_CODEGEN=/abs/path/fcan_codegen west twister -T apps --integration
 | `tests/drivers/motor/robomaster_start_retry` | 起動できない CAN バスからの復帰 | `native_sim`、`native_sim/native/64` |
 | `tests/lib/custom` | `lib/custom` | 制限なし |
 
-いずれも実機を必要としない。
+上表のドライバ・ライブラリテストはいずれも実機を必要としない。
 ハードウェアの振る舞いはテスト側のスタブで模擬しており、`native_sim` 上で完結する。
 
 `tests/drivers/encoder/accum` だけはデバイスを介さず、`drivers/encoder/encoder_accum.c` を直接ビルドして関数を呼ぶ。
@@ -80,3 +80,16 @@ AMT21x のテストは 3 通りに分かれている。
 
 `.github/workflows/docs.yml` は Doxygen と Sphinx を Doxygen 1.9.6 と 1.14.0 の両方でビルドし、`main` では GitHub Pages に公開する。
 Sphinx は `-W` 付きで走るため、警告はエラーになる。
+
+## RP2350-CAN のボード検証
+
+`tests/boards/rp2350_can` は `waveshare_rp2350_can/rp2350a/m33` のみを対象とし、
+`--integration` ではビルドのみを行う。UART・PWM・CAN API をリンクし、
+UART を占有しない RTT 構成、Classic CAN、Flash 容量、UF2 出力設定をビルド時に検証する。
+
+```shell
+west twister -T tests/boards/rp2350_can --integration
+```
+
+実機では GP0–GP1 の接続と RTT デバッグプローブが必要。
+テスト内容と外部 CAN バスの確認手順は [RP2350-CAN](boards/waveshare_rp2350_can.rst) を参照する。

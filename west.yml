@@ -19,7 +19,9 @@ manifest:
         name-allowlist:
           - cmsis_6 # required by the ARM port for Cortex-M
           - cmsis-dsp
+          - hal_rpi_pico # RP2350 SoC support
           - hal_stm32 # required by the nucleo_f302r8 board (STM32 based)
+          - segger # RTT console and logging
     - name: cannectivity
       url: https://github.com/CANnectivity/cannectivity.git
       revision: v1.4.0

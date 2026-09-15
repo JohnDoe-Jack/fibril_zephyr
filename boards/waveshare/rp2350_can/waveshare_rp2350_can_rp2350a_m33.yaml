@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 TiaC Systems
+# SPDX-License-Identifier: Apache-2.0
+# Modified for fibril_zephyr; see doc/index.rst for provenance and porting notes.
+
+identifier: waveshare_rp2350_can/rp2350a/m33
+name: Waveshare RP2350-CAN (Cortex-M33)
+vendor: waveshare
+type: mcu
+arch: arm
+flash: 4096
+ram: 520
+toolchain:
+  - zephyr
+  - gnuarmemb
+supported:
+  - can
+  - gpio
+  - pwm
+  - spi
+  - uart

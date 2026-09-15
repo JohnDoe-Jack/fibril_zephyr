@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 TiaC Systems
+# SPDX-License-Identifier: Apache-2.0
+# Modified for fibril_zephyr; see doc/index.rst for provenance and porting notes.
+
+config BOARD_WAVESHARE_RP2350_CAN
+	select SOC_RP2350A_M33 if BOARD_WAVESHARE_RP2350_CAN_RP2350A_M33
