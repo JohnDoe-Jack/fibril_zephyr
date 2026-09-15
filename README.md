@@ -105,6 +105,7 @@ west build -b <ボード名> app -- -DEXTRA_CONF_FILE=debug.conf   # 診断用 K
 | [samples/drivers/amt21](samples/drivers/amt21) | AMT21x アブソリュートエンコーダの読み出し |
 | [samples/drivers/qdec](samples/drivers/qdec) | STM32 タイマでデコードした直交エンコーダの読み出し |
 | [samples/drivers/can_router](samples/drivers/can_router) | fibril_can のルータを Zephyr の CAN デバイスとして使う |
+| [samples/lib/esp_now_gamepad_bridge](samples/lib/esp_now_gamepad_bridge) | ESP32 からの UART gamepad 受信・RTT 表示 |
 | [samples/lib/fibril_can/example_node](samples/lib/fibril_can/example_node) | codegen 出力を使った fibril_can スレーブノード |
 | [samples/lib/fibril_can/hub_gs_usb_self](samples/lib/fibril_can/hub_gs_usb_self) | CAN hub と self ノードを CANnectivity の `gs_usb` 経由で PC に見せる |
 | [samples/lib/fibril_can/latency_probe_node](samples/lib/fibril_can/latency_probe_node) | E2E レイテンシ計測用のスレーブ |

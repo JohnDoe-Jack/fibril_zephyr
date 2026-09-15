@@ -67,7 +67,7 @@ codegen が決めるブロック配列の並びはワイヤの契約の一部で
 | `drivers/` | out-of-tree ドライバの実装 |
 | `dts/bindings/` | 上記ドライバと機能の devicetree binding |
 | `include/` | 公開ヘッダ。ドライバクラスの API はここが正本 |
-| `lib/` | out-of-tree ライブラリ。`lib/fibril_can_node/` にブロック型の実装、`lib/fcan_transport/` にバスへの繋ぎ方 |
+| `lib/` | out-of-tree ライブラリ。`lib/fibril_can_node/` にブロック型の実装、`lib/fcan_transport/` にバスへの繋ぎ方、`lib/esp_now_gamepad_bridge/` に UART gamepad 受信 |
 | `samples/` | ドライバ単体および fibril_can と組み合わせたサンプル |
 | `tests/` | Twister から走る ztest と実機用ボードテストのビルド確認 |
 | `scripts/` | west の拡張コマンドと runner |
@@ -98,3 +98,8 @@ AMT21x の統計取得がその例で、トランザクションの失敗の分�
 現在は v4.4.1 に固定してある。
 
 上げるときは `west.yml` を書き換えて `west update` を実行し、README のバージョン記述も合わせて直す。
+
+## Gamepad UART 受信
+
+`lib/esp_now_gamepad_bridge/` は ESP32 からの gamepad snapshot を受け取る通信層。
+UART の割り当てはアプリケーションが行う。[公開 API と failsafe](gamepad_bridge.md) を参照。

@@ -1,0 +1,12 @@
+common:
+  tags: [gamepad, uart]
+  integration_platforms:
+    - native_sim
+    - native_sim/native/64
+tests:
+  lib.esp_now_gamepad_bridge.uart.async:
+    extra_configs:
+      - CONFIG_ESP_NOW_GAMEPAD_BRIDGE_ASYNC=y
+  lib.esp_now_gamepad_bridge.uart.irq:
+    extra_configs:
+      - CONFIG_ESP_NOW_GAMEPAD_BRIDGE_INTERRUPT=y

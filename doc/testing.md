@@ -49,6 +49,9 @@ FCAN_CODEGEN=/abs/path/fcan_codegen west twister -T apps --integration
 | `tests/drivers/motor/robomaster` | RoboMaster ドライバ | `native_sim`、`native_sim/native/64` |
 | `tests/drivers/motor/robomaster_start_retry` | 起動できない CAN バスからの復帰 | `native_sim`、`native_sim/native/64` |
 | `tests/drivers/servo/pwm` | PWM RC サーボの変換・停止・設定検証 | `native_sim`、`native_sim/native/64` |
+| `tests/lib/esp_now_gamepad_bridge/protocol` | COBS / CRC・seq・時刻注入による failsafe | `native_sim`、`native_sim/native/64` |
+| `tests/lib/esp_now_gamepad_bridge/uart` | async / 割り込み UART 受信・buffer rollover | `native_sim`、`native_sim/native/64` |
+| `tests/lib/esp_now_gamepad_bridge/async_faults` | UART API 失敗・buffer 所有権・RX 再開 | `native_sim`、`native_sim/native/64` |
 | `tests/lib/custom` | `lib/custom` | 制限なし |
 
 上表のドライバ・ライブラリテストはいずれも実機を必要としない。

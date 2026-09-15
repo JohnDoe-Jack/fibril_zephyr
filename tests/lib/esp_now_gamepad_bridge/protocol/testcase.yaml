@@ -1,0 +1,6 @@
+tests:
+  lib.esp_now_gamepad_bridge.protocol:
+    tags: [gamepad, uart, protocol]
+    integration_platforms:
+      - native_sim
+      - native_sim/native/64

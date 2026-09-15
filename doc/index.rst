@@ -13,6 +13,7 @@ API リファレンスは Doxygen が別に生成する。
    overview
    apps
    testing
+   gamepad_bridge
 
 .. toctree::
    :maxdepth: 1

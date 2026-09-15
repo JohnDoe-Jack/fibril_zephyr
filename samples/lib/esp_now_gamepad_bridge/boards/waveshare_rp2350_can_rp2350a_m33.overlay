@@ -1,0 +1,12 @@
+/ {
+	aliases {
+		gamepad-uart = &uart0;
+	};
+};
+
+&uart0 {
+	/* ESP32-C3 GPIO21 TX connects to GP1 RX; no UART TX wiring is needed. */
+	current-speed = <115200>;
+	/delete-property/ hw-flow-control;
+	status = "okay";
+};

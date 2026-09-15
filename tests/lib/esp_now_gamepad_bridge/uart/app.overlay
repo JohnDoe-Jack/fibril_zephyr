@@ -1,0 +1,10 @@
+/ {
+	gamepad_uart: gamepad-uart {
+		compatible = "zephyr,uart-emul";
+		current-speed = <115200>;
+		/* Hold bursts longer than both bridge buffers for rollover tests. */
+		rx-fifo-size = <512>;
+		tx-fifo-size = <16>;
+		status = "okay";
+	};
+};

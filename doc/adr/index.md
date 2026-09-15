@@ -38,6 +38,7 @@
 | [0003](0003-multi-app-structure.md) | 複数用途のファームウェアを 1 つのアプリケーションと機能ライブラリで構成する | Proposed |
 | [0004](0004-rp2350-can-board-port.md) | RP2350-CAN を標準 Zephyr 上の Classic CAN ボードとして移植する | Accepted |
 | [0005](0005-pwm-servo-contract.md) | PWM サーボの角度変換と初期状態 | Accepted |
+| [0006](0006-gamepad-uart-reception.md) | Gamepad UART の共通プロトコルと受信方式 | Accepted |
 
 ```{toctree}
 :maxdepth: 1
@@ -48,4 +49,5 @@
 0003-multi-app-structure
 0004-rp2350-can-board-port
 0005-pwm-servo-contract
+0006-gamepad-uart-reception
 ```
