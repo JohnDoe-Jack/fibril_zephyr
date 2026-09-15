@@ -1,0 +1,144 @@
+#include <zephyr/dt-bindings/pwm/pwm.h>
+/ {
+    test_pwm: pwm-test {
+        compatible = "zephyr,fake-pwm";
+        #pwm-cells = <2>;
+        /* One timer cycle per microsecond makes pulse assertions exact. */
+        frequency = <1000000>;
+        status = "okay";
+    };
+    unready_pwm: pwm-unready {
+        compatible = "zephyr,fake-pwm";
+        #pwm-cells = <2>;
+        frequency = <1000000>;
+        zephyr,deferred-init;
+        status = "okay";
+    };
+    servo0: servo0 {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    servo1: servo1 {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 1 PWM_USEC(10000)>;
+        min-pulse-us = <1000>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2200>;
+        min-angle-deg = <(-90)>;
+        max-angle-deg = <(90)>;
+    };
+    init_failure: init-failure {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 7 PWM_USEC(20000)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    unready_servo: unready-servo {
+        zephyr,deferred-init;
+        compatible = "fibril,pwm-servo";
+        pwms = <&unready_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    zero_pulse: zero-pulse {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <0>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    equal_pulses: equal-pulses {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <2500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    reversed_pulses: reversed-pulses {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <3000>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    center_low: center-low {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <499>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    center_high: center-high {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <2501>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    equal_angles: equal-angles {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(0)>;
+    };
+    reversed_angles: reversed-angles {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(20000)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(180)>;
+        max-angle-deg = <(0)>;
+    };
+    zero_period: zero-period {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(0)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    pulse_over_period: pulse-over-period {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(2000)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <2500>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+    pulse_overflow: pulse-overflow {
+        compatible = "fibril,pwm-servo";
+        pwms = <&test_pwm 0 PWM_USEC(4294967)>;
+        min-pulse-us = <500>;
+        center-pulse-us = <1500>;
+        max-pulse-us = <4294968>;
+        min-angle-deg = <(0)>;
+        max-angle-deg = <(180)>;
+    };
+};

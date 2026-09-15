@@ -1,0 +1,19 @@
+#include <zephyr/dt-bindings/pwm/pwm.h>
+
+/ {
+	aliases {
+		servo0 = &servo0;
+	};
+
+	servo0: servo0 {
+		compatible = "fibril,pwm-servo";
+		/* GP20 is PWM2A (channel 4); this servo uses a 50 Hz frame. */
+		pwms = <&pwm 4 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+		/* Calibration for the intended 500--2500 us, 0--180 degree servo. */
+		min-pulse-us = <500>;
+		center-pulse-us = <1500>;
+		max-pulse-us = <2500>;
+		min-angle-deg = <0>;
+		max-angle-deg = <180>;
+	};
+};

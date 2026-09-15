@@ -1,0 +1,9 @@
+tests:
+  drivers.servo.pwm:
+    tags:
+      - drivers
+      - servo
+      - pwm
+    integration_platforms:
+      - native_sim
+      - native_sim/native/64

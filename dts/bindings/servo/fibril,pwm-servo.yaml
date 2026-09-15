@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Generic RC servo controlled by one Zephyr PWM channel. Angle commands are
+  mapped linearly between the minimum and maximum pulse widths. The center
+  pulse is a calibration reference, not a third interpolation point.
+  Initialization holds the output inactive until the first command.
+
+compatible: "fibril,pwm-servo"
+include: base.yaml
+
+properties:
+  pwms:
+    type: phandle-array
+    required: true
+    description: |
+      Exactly one PWM channel, with its period in nanoseconds and optional
+      polarity flags. Use normal polarity for a conventional active-high servo.
+      The period must be nonzero and at least max-pulse-us * 1000.
+  min-pulse-us:
+    type: int
+    required: true
+    description: Positive minimum pulse width in microseconds, below max-pulse-us.
+  center-pulse-us:
+    type: int
+    required: true
+    description: |
+      Calibration reference in microseconds, inclusively between the minimum
+      and maximum. This is not applied at startup or used in angle conversion.
+  max-pulse-us:
+    type: int
+    required: true
+    description: |
+      Maximum pulse width in microseconds. Must fit in a uint32_t after
+      conversion to nanoseconds and must not exceed the PWM period.
+  min-angle-deg:
+    type: int
+    required: true
+    description: Signed minimum angle in degrees, strictly below max-angle-deg.
+  max-angle-deg:
+    type: int
+    required: true
+    description: Signed maximum angle in degrees.

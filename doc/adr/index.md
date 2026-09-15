@@ -37,6 +37,7 @@
 | [0002](0002-encoder-feedback-layering.md) | encoder feedback を積算位置と速度で表し、積算の責務をドライバに置く | Accepted |
 | [0003](0003-multi-app-structure.md) | 複数用途のファームウェアを 1 つのアプリケーションと機能ライブラリで構成する | Proposed |
 | [0004](0004-rp2350-can-board-port.md) | RP2350-CAN を標準 Zephyr 上の Classic CAN ボードとして移植する | Accepted |
+| [0005](0005-pwm-servo-contract.md) | PWM サーボの角度変換と初期状態 | Accepted |
 
 ```{toctree}
 :maxdepth: 1
@@ -46,4 +47,5 @@
 0002-encoder-feedback-layering
 0003-multi-app-structure
 0004-rp2350-can-board-port
+0005-pwm-servo-contract
 ```

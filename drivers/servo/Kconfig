@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+menuconfig SERVO
+	bool "Servo driver support"
+	depends on PWM
+	help
+	  Enable generic RC servo drivers using the Zephyr PWM API.
+
+if SERVO
+
+config SERVO_INIT_PRIORITY
+	int "Servo driver init priority"
+	default 85
+	help
+	  Must be later than the initialization priority of the PWM controller.
+
+module = SERVO
+module-str = servo
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # SERVO

@@ -82,6 +82,7 @@ codegen が決めるブロック配列の並びはワイヤの契約の一部で
 | --- | --- | --- |
 | エンコーダ（`include/drivers/encoder.h`） | `drivers/encoder/amt21.c` | [AMT21x](drivers/amt21.md) |
 | エンコーダ（`include/drivers/encoder.h`） | `drivers/encoder/qdec_stm32.c` | [直交エンコーダ](drivers/qdec_stm32.md) |
+| サーボ（`include/drivers/servo.h`） | `drivers/servo/pwm_servo.c` | [PWM RC サーボ](drivers/pwm_servo.md) |
 | モータ（`include/drivers/motor.h`） | `drivers/motor/robomaster.c` | [RoboMaster](drivers/robomaster.md) |
 
 ラップ解決・速度・オフセットはエンコーダドライバに共通なので、`drivers/encoder/encoder_accum.c` に切り出してある。

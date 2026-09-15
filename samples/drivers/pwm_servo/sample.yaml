@@ -1,0 +1,11 @@
+sample:
+  name: Generic PWM servo
+common:
+  build_only: true
+  integration_platforms:
+    - waveshare_rp2350_can/rp2350a/m33
+  tags:
+    - servo
+    - pwm
+tests:
+  sample.drivers.pwm_servo: {}
