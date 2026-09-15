@@ -31,6 +31,7 @@ API リファレンスは Doxygen が別に生成する。
    boards/fibril_robomaster_miniv3
    boards/fibril_robomaster_miniv4
    boards/fibril_rc26_mainair_v01
+   boards/waveshare_rp2350_can
 
 .. toctree::
    :maxdepth: 1

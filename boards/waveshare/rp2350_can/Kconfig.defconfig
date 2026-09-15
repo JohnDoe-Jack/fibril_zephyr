@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 TiaC Systems
+# SPDX-License-Identifier: Apache-2.0
+# Modified for fibril_zephyr; see doc/index.rst for provenance and porting notes.
+
+if BOARD_WAVESHARE_RP2350_CAN
+
+config PWM
+	default y
+
+config SPI
+	default y
+
+config CAN
+	default y
+
+config LOG_BACKEND_RTT
+	default y if LOG
+
+config LOG_BACKEND_UART
+	default n
+
+config SHELL_BACKEND_SERIAL
+	default n
+
+endif # BOARD_WAVESHARE_RP2350_CAN

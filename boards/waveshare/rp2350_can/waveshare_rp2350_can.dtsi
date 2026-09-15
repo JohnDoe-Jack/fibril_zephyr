@@ -1,0 +1,102 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2025-2026 TiaC Systems
+ * SPDX-License-Identifier: Apache-2.0
+ * Modified for fibril_zephyr; see doc/index.rst for provenance and porting notes.
+ */
+
+#include <mem.h>
+#include <freq.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include "waveshare_rp2350_can-pinctrl.dtsi"
+
+/ {
+	model = "Waveshare RP2350-CAN";
+	compatible = "waveshare,rp2350-can";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,flash-controller = &qmi;
+		zephyr,code-partition = &code_partition;
+		zephyr,canbus = &xl2515;
+	};
+
+	aliases {
+		can0 = &xl2515;
+		led0 = &led0;
+		pwm-led0 = &pwm_led0;
+	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+		led0: led0 {
+			gpios = <&gpio0 25 GPIO_ACTIVE_HIGH>;
+			label = "LED";
+		};
+	};
+
+	pwm-leds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led0 {
+			pwms = <&pwm 9 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			label = "PWM_LED";
+		};
+	};
+};
+
+&flash0 {
+	reg = <0x10000000 DT_SIZE_M(4)>;
+	/* Storage allocation belongs to the application; expose all 4 MiB. */
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		code_partition: partition@0 {
+			label = "code";
+			reg = <0x0 DT_SIZE_M(4)>;
+		};
+	};
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+};
+
+&spi1 {
+	status = "okay";
+	pinctrl-0 = <&spi1_can>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;
+
+	/* The onboard XL2515 uses the MCP2515 register interface. */
+	can0: xl2515: can-controller@0 {
+		compatible = "microchip,mcp2515";
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+		int-gpios = <&gpio0 8 GPIO_ACTIVE_LOW>;
+		/* The CAN controller has its own 16 MHz crystal. */
+		osc-freq = <DT_FREQ_M(16)>;
+		can-transceiver {
+			max-bitrate = <DT_FREQ_M(1)>;
+		};
+	};
+};
+
+&pwm {
+	status = "okay";
+	pinctrl-0 = <&pwm_pico_default>;
+	pinctrl-names = "default";
+	/* Leave dividers automatic so applications can choose the period. */
+};
+
+&timer0 {
+	status = "okay";
+};
