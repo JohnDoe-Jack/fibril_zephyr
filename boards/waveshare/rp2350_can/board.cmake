@@ -11,7 +11,7 @@ board_runner_args(openocd --cmd-pre-init "transport select swd")
 board_runner_args(openocd --cmd-pre-init "source [find target/rp2350.cfg]")
 board_runner_args(openocd --cmd-pre-init "set_adapter_speed_if_not_set 2000")
 # Let the RP2350 boot ROM initialize its redundancy coprocessor before debugging.
-board_runner_args(openocd --gdb-pre-debug "monitor reset init")
+board_runner_args(openocd --gdb-init "monitor reset init")
 board_runner_args(jlink "--device=RP2350_M33_0")
 board_runner_args(uf2 "--board-id=RP2350")
 

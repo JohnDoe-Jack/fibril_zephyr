@@ -1,0 +1,64 @@
+#include <zephyr/dt-bindings/pinctrl/rpi-pico-rp2350a-pinctrl.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+
+/ {
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+	};
+
+	aliases {
+		gamepad-uart = &uart1;
+		servo0 = &servo0;
+	};
+
+	servo0: servo0 {
+		compatible = "fibril,pwm-servo";
+		/* Header pin 22 is GP17 / PWM0B (channel 1); use a 50 Hz frame. */
+		pwms = <&pwm 1 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+		min-pulse-us = <500>;
+		center-pulse-us = <1500>;
+		max-pulse-us = <2500>;
+		min-angle-deg = <0>;
+		max-angle-deg = <180>;
+	};
+};
+
+zephyr_udc0: &usbd {
+	status = "okay";
+
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+		label = "Gamepad Servo Monitor";
+	};
+};
+
+&pinctrl {
+	gamepad_uart1_rx_p21: gamepad_uart1_rx_p21 {
+		group0 {
+			/* Header pin 27 is GP21 / UART1 RX; TX is intentionally unused. */
+			pinmux = <UART1_RX_P21>;
+			input-enable;
+		};
+	};
+
+	servo_pwm0b_p17: servo_pwm0b_p17 {
+		group0 {
+			pinmux = <PWM_0B_P17>;
+		};
+	};
+};
+
+&uart1 {
+	pinctrl-0 = <&gamepad_uart1_rx_p21>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	/delete-property/ hw-flow-control;
+	status = "okay";
+};
+
+&pwm {
+	/* Replace the board pin group so GP21 can be owned exclusively by UART1 RX. */
+	pinctrl-0 = <&servo_pwm0b_p17>;
+	pinctrl-names = "default";
+	status = "okay";
+};

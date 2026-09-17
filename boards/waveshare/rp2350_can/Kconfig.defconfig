@@ -14,6 +14,7 @@ config CAN
 	default y
 
 config LOG_BACKEND_RTT
+	depends on USE_SEGGER_RTT
 	default y if LOG
 
 config LOG_BACKEND_UART
