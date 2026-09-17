@@ -37,7 +37,7 @@ workspaceルートから実行する。
 
 ```shell
 west build -p always -b waveshare_rp2350_can/rp2350a/m33 \
-  fibril_zephyr/.claude/worktrees/gamepad-servo/samples/app/gamepad_servo \
+  fibril_zephyr/apps/gamepad_servo \
   -d build/gamepad-servo -- \
   -DZEPHYR_EXTRA_MODULES=/home/iwasakim/zephyrproject/fibril_zephyr/.claude/worktrees/gamepad-servo
 west flash -d build/gamepad-servo --runner uf2
