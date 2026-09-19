@@ -15,9 +15,9 @@
 		compatible = "fibril,pwm-servo";
 		/* Header pin 22 is GP17 / PWM0B (channel 1); use a 50 Hz frame. */
 		pwms = <&pwm 1 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-		min-pulse-us = <500>;
-		center-pulse-us = <1500>;
-		max-pulse-us = <2500>;
+		min-pulse-us = <720>;
+		center-pulse-us = <1080>;
+		max-pulse-us = <1200>;
 		min-angle-deg = <0>;
 		max-angle-deg = <180>;
 	};
@@ -30,6 +30,13 @@ zephyr_udc0: &usbd {
 		compatible = "zephyr,cdc-acm-uart";
 		label = "Gamepad Servo Monitor";
 	};
+};
+
+&xl2515 {
+	/* This application does not use CAN. Keep the onboard controller from
+	 * affecting USB CDC through its SPI initialization or interrupt line.
+	 */
+	status = "disabled";
 };
 
 &pinctrl {

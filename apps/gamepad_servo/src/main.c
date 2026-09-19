@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -11,8 +12,10 @@ LOG_MODULE_REGISTER(gamepad_servo, LOG_LEVEL_INF);
 
 #define SERVO_NODE DT_ALIAS(servo0)
 #define GAMEPAD_UART_NODE DT_ALIAS(gamepad_uart)
+#define LED_NODE DT_ALIAS(led0)
 
 #define CONTROL_PERIOD_MS 10U
+#define LED_BLINK_HALF_PERIOD_MS 500U
 #define PULSE_STEP_US 5U
 #define STATUS_PERIOD_MS 250U
 
@@ -23,6 +26,8 @@ LOG_MODULE_REGISTER(gamepad_servo, LOG_LEVEL_INF);
 
 BUILD_ASSERT(SERVO_PERIOD_US == 20000U,
              "duty reporting assumes a 20 ms servo frame");
+
+static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED_NODE, gpios);
 
 static uint32_t clamp_add(uint32_t value, uint32_t step, uint32_t maximum) {
   return value > maximum - step ? maximum : value + step;
@@ -46,8 +51,21 @@ int main(void) {
   const struct device *uart = DEVICE_DT_GET(GAMEPAD_UART_NODE);
   uint32_t pulse_us = SERVO_CENTER_US;
   int64_t next_status_ms = 0;
+  int64_t next_led_toggle_ms = 0;
   bool was_connected = false;
+  bool led_on = true;
   int ret;
+
+  if (!gpio_is_ready_dt(&led)) {
+    LOG_ERR("LED GPIO is not ready");
+    return -ENODEV;
+  }
+
+  ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
+  if (ret < 0) {
+    LOG_ERR("LED GPIO configuration failed (%d)", ret);
+    return ret;
+  }
 
   if (!device_is_ready(servo)) {
     LOG_ERR("Servo is not ready");
@@ -84,6 +102,31 @@ int main(void) {
       break;
     }
 
+    now_ms = k_uptime_get();
+    if (state.connected) {
+      if (next_led_toggle_ms == 0) {
+        next_led_toggle_ms = now_ms + LED_BLINK_HALF_PERIOD_MS;
+      } else if (now_ms >= next_led_toggle_ms) {
+        led_on = !led_on;
+        ret = gpio_pin_set_dt(&led, led_on ? 1 : 0);
+        if (ret < 0) {
+          LOG_ERR("LED update failed (%d)", ret);
+          break;
+        }
+        next_led_toggle_ms = now_ms + LED_BLINK_HALF_PERIOD_MS;
+      }
+    } else {
+      next_led_toggle_ms = 0;
+      if (!led_on) {
+        ret = gpio_pin_set_dt(&led, 1);
+        if (ret < 0) {
+          LOG_ERR("LED update failed (%d)", ret);
+          break;
+        }
+        led_on = true;
+      }
+    }
+
     up = (state.buttons & GAMEPAD_BUTTON_DPAD_UP) != 0U;
     down = (state.buttons & GAMEPAD_BUTTON_DPAD_DOWN) != 0U;
     if (!state.connected) {
@@ -107,7 +150,6 @@ int main(void) {
     }
 
     was_connected = state.connected;
-    now_ms = k_uptime_get();
     if (now_ms >= next_status_ms) {
       log_status(&state, pulse_us);
       next_status_ms = now_ms + STATUS_PERIOD_MS;
@@ -117,6 +159,9 @@ int main(void) {
 
   if (servo_set_pulse(servo, SERVO_CENTER_US) < 0) {
     LOG_ERR("Could not return servo to center after failure");
+  }
+  if (gpio_pin_set_dt(&led, 1) < 0) {
+    LOG_ERR("Could not turn LED on after failure");
   }
   return ret;
 }
