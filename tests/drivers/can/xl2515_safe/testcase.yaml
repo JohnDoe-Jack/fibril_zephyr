@@ -1,0 +1,9 @@
+tests:
+  drivers.can.xl2515_safe.fault_recovery:
+    tags:
+      - can
+      - drivers
+    platform_allow:
+      - native_sim
+    integration_platforms:
+      - native_sim

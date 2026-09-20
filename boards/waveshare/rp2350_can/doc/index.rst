@@ -84,10 +84,13 @@ PWM を使わず GPIO として利用するときは ``&pwm { status = "disabled
 CAN
 ---
 
-オンボード XL2515 は ``microchip,mcp2515`` として登録する。
+オンボード XL2515 は ``fibril,xl2515-safe`` として登録する。
 ``DT_ALIAS(can0)``、``DT_CHOSEN(zephyr_canbus)``、
 ``DT_NODELABEL(xl2515)``、``DT_NODELABEL(can0)`` は同じデバイスを指す。
-``CONFIG_CAN=y`` と SPI / MCP2515 ドライバを既定で有効にする。
+``CONFIG_CAN=y`` と SPI / XL2515 耐障害ドライバを既定で有効にする。
+割り込み処理回数を制限し、SPI/GPIOエラー、INT張り付き、BUS-OFF時は
+CAN送信を失敗完了させて低優先度のプリエンプティブスレッドで再初期化する。
+したがってCAN故障によって他の制御スレッドを協調スレッド内で占有し続けない。
 
 Classic CAN 2.0B の標準 ID / 拡張 ID に対応し、最大 1 Mbps とする。
 ``can_set_bitrate(dev, 1000000)`` は ``can_start()`` の前に呼ぶ。

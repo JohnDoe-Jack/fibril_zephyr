@@ -1,0 +1,26 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+	aliases {
+		can0 = &xl2515_safe_test;
+	};
+};
+
+&gpio0 {
+	ngpios = <2>;
+};
+
+&spi0 {
+	status = "okay";
+
+	xl2515_safe_test: can-controller@0 {
+		compatible = "fibril,xl2515-safe";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+		int-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+		osc-freq = <16000000>;
+		bitrate = <125000>;
+	};
+};

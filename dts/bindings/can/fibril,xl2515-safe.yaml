@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: Fault-contained XL2515 SPI CAN controller
+
+compatible: "fibril,xl2515-safe"
+
+include: [spi-device.yaml, can-controller.yaml]
+
+properties:
+  osc-freq:
+    type: int
+    required: true
+    description: Frequency of the external oscillator
+
+  int-gpios:
+    type: phandle-array
+    required: true
+    description: Active-low controller interrupt pin
+
+  reg:
+    type: array
+    required: true

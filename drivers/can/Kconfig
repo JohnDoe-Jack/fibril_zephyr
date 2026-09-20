@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config CAN_XL2515_SAFE
+	bool "Fault-contained XL2515 CAN driver"
+	default y
+	depends on DT_HAS_FIBRIL_XL2515_SAFE_ENABLED
+	select SPI
+	help
+	  Enable the XL2515 driver with bounded interrupt draining, a
+	  preemptible interrupt worker, and delayed controller recovery.
+
+if CAN_XL2515_SAFE
+
+config CAN_XL2515_SAFE_INT_THREAD_STACK_SIZE
+	int "XL2515 interrupt worker stack size"
+	default 1024
+
+config CAN_XL2515_SAFE_INT_THREAD_PRIO
+	int "XL2515 preemptible interrupt worker priority"
+	default 2
+	help
+	  Preemptible priority used by the internal interrupt worker. Keep this
+	  numerically greater than the time-critical application control thread.
+
+config CAN_XL2515_SAFE_MAX_FILTERS
+	int "Maximum number of concurrent active filters"
+	default 16
+	range 1 32
+
+config CAN_XL2515_SAFE_IRQ_DRAIN_LIMIT
+	int "Maximum interrupt causes handled per wake-up"
+	default 32
+	range 1 256
+	help
+	  Bounds the work done after one GPIO interrupt. Reaching the limit is
+	  treated as a stuck interrupt and starts controller recovery.
+
+config CAN_XL2515_SAFE_RECOVERY_DELAY_MS
+	int "Delay before controller recovery"
+	default 100
+	range 1 60000
+	help
+	  Backoff used after SPI, GPIO, stuck-interrupt, or bus-off faults.
+
+endif # CAN_XL2515_SAFE

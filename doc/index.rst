@@ -23,6 +23,7 @@ API リファレンスは Doxygen が別に生成する。
    drivers/qdec_stm32
    drivers/robomaster
    drivers/pwm_servo
+   drivers/xl2515_safe
 
 .. toctree::
    :maxdepth: 1

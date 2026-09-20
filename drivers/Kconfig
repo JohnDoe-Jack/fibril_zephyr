@@ -7,4 +7,5 @@ rsource "sensor/Kconfig"
 rsource "motor/Kconfig"
 rsource "encoder/Kconfig"
 rsource "servo/Kconfig"
+rsource "can/Kconfig"
 endmenu

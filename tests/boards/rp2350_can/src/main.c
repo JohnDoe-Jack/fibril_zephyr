@@ -11,6 +11,8 @@ BUILD_ASSERT(!DT_HAS_CHOSEN(zephyr_console), "UART must remain available to appl
 BUILD_ASSERT(!DT_HAS_CHOSEN(zephyr_shell_uart), "Shell must not claim UART0");
 BUILD_ASSERT(!IS_ENABLED(CONFIG_UART_CONSOLE), "UART console must be disabled");
 BUILD_ASSERT(!IS_ENABLED(CONFIG_CAN_FD_MODE), "XL2515 supports Classic CAN only");
+BUILD_ASSERT(IS_ENABLED(CONFIG_CAN_XL2515_SAFE),
+	     "Fault-contained XL2515 driver must be enabled");
 BUILD_ASSERT(IS_ENABLED(CONFIG_LOG_BACKEND_RTT), "Logs must use RTT");
 BUILD_ASSERT(IS_ENABLED(CONFIG_BUILD_OUTPUT_UF2), "UF2 output must be enabled");
 BUILD_ASSERT(DT_SAME_NODE(DT_ALIAS(can0), DT_CHOSEN(zephyr_canbus)),

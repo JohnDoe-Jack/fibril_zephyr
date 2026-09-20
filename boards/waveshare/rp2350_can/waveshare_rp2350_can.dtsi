@@ -76,9 +76,9 @@
 	pinctrl-names = "default";
 	cs-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;
 
-	/* The onboard XL2515 uses the MCP2515 register interface. */
+	/* Keep XL2515 faults contained so unrelated control loops remain runnable. */
 	can0: xl2515: can-controller@0 {
-		compatible = "microchip,mcp2515";
+		compatible = "fibril,xl2515-safe";
 		reg = <0>;
 		spi-max-frequency = <DT_FREQ_M(10)>;
 		int-gpios = <&gpio0 8 GPIO_ACTIVE_LOW>;

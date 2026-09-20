@@ -33,10 +33,10 @@ zephyr_udc0: &usbd {
 };
 
 &xl2515 {
-	/* This application does not use CAN. Keep the onboard controller from
-	 * affecting USB CDC through its SPI initialization or interrupt line.
+	/* The fault-contained driver must not stop UART/PWM control even when the
+	 * CAN bus, controller interrupt, or SPI path fails.
 	 */
-	status = "disabled";
+	status = "okay";
 };
 
 &pinctrl {
