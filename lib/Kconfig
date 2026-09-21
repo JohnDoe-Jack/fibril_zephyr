@@ -9,5 +9,7 @@ rsource "fcan_transport/Kconfig"
 
 rsource "esp_now_gamepad_bridge/Kconfig"
 rsource "differential_screw/Kconfig"
+rsource "arm/Kconfig"
+rsource "arm_control/Kconfig"
 
 endmenu

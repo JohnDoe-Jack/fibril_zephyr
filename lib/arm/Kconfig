@@ -1,0 +1,5 @@
+config ARM_CONTROL_MATH
+	bool "Planar robot arm math"
+	help
+	  Hardware-independent kinematics, motion, transmission, workspace,
+	  continuity, and controller logic for a two-link planar arm.

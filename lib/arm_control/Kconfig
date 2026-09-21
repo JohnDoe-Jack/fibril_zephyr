@@ -1,0 +1,5 @@
+config ROBOT_ARM_CONTROL
+	bool "Planar robot arm controller"
+	select ARM_CONTROL_MATH
+	help
+	  Hardware-independent two-joint controller and enable sequencing.
