@@ -1,0 +1,5 @@
+config DIFFERENTIAL_SCREW
+	bool "Differential screw wrist control"
+	depends on CPP
+	help
+	  Pure C++17 differential-screw kinematics, PD control, and stall guard.
