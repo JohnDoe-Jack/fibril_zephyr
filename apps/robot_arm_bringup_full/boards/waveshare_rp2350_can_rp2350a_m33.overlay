@@ -1,0 +1,96 @@
+#include <zephyr/dt-bindings/pinctrl/rpi-pico-rp2350a-pinctrl.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+
+/ {
+	chosen { zephyr,console = &cdc_acm_uart0; };
+	aliases {
+		gamepad-uart = &uart1;
+		servo0 = &tip_servo;
+	};
+
+	tip_servo: tip-servo {
+		compatible = "fibril,pwm-servo";
+		pwms = <&pwm 1 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+		min-pulse-us = <1000>;
+		center-pulse-us = <1210>;
+		max-pulse-us = <1400>;
+		min-angle-deg = <0>;
+		max-angle-deg = <180>;
+	};
+
+	robomaster: robomaster-controller {
+		compatible = "dji,robomaster";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		cans = <&xl2515>;
+		feedback-timeout-ms = <100>;
+		tx-period-us = <1000>;
+		command-timeout-ms = <30>;
+		external-bus-management;
+		status = "okay";
+		wrist_right: motor@1 {
+			compatible = "dji,robomaster-motor";
+			reg = <1>;
+			model = "c610";
+			max-current = <500>;
+			rotor-speed-bound-rpm = <6000>;
+			gear-ratio = <36>;
+		};
+		wrist_left: motor@2 {
+			compatible = "dji,robomaster-motor";
+			reg = <2>;
+			model = "c610";
+			max-current = <500>;
+			rotor-speed-bound-rpm = <6000>;
+			gear-ratio = <36>;
+		};
+	};
+
+	robstride: robstride-controller {
+		compatible = "robstride,controller";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		can = <&xl2515>;
+		master-id = <253>;
+		feedback-timeout-ms = <100>;
+		command-timeout-ms = <100>;
+		external-bus-management;
+		status = "okay";
+		shoulder: motor@1 { compatible = "robstride,rs00"; reg = <1>; };
+		elbow: motor@2 { compatible = "robstride,rs00"; reg = <2>; };
+	};
+};
+
+zephyr_udc0: &usbd {
+	status = "okay";
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+		label = "Full Arm Bring-up";
+	};
+};
+
+&xl2515 { status = "okay"; };
+
+&pinctrl {
+	gamepad_uart1_rx_p21: gamepad_uart1_rx_p21 {
+		group0 { pinmux = <UART1_RX_P21>; input-enable; };
+	};
+	tip_servo_pwm0b_p17: tip_servo_pwm0b_p17 {
+		group0 { pinmux = <PWM_0B_P17>; };
+	};
+};
+
+&uart1 {
+	pinctrl-0 = <&gamepad_uart1_rx_p21>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	/delete-property/ hw-flow-control;
+	status = "okay";
+};
+
+&pwm {
+	pinctrl-0 = <&tip_servo_pwm0b_p17>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
