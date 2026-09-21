@@ -30,6 +30,11 @@ constexpr uint32_t servo_min_us = 1000U;
 constexpr uint32_t servo_center_us = 1210U;
 constexpr uint32_t servo_max_us = 1400U;
 constexpr uint32_t servo_step_us = 5U;
+#ifdef ROBOT_ARM_BRINGUP
+constexpr int64_t command_free_ms = 3000;
+constexpr int64_t zero_prove_ms = 1000;
+constexpr uint8_t deadman_min = 200U;
+#endif
 
 const device *const can_dev = DEVICE_DT_GET(DT_NODELABEL(xl2515));
 const device *const robomaster = DEVICE_DT_GET(DT_NODELABEL(robomaster));
@@ -131,8 +136,15 @@ bool prepareAndEnable(armctl::Controller &controller)
 	if (robstride_transport_get_stats(robstride, &stats) != 0 || !controller.clearFault()) {
 		return false;
 	}
-	const robstride_csp_config config{armctl::can_timeout_ms, armctl::joint_speed_limit_rad_s,
-					  armctl::joint_current_limit_a};
+	robstride_csp_config config{};
+	config.can_timeout_ms = armctl::can_timeout_ms;
+#ifdef ROBOT_ARM_BRINGUP
+	config.speed_limit_rad_s = 1.0F;
+	config.current_limit_a = 1.0F;
+#else
+	config.speed_limit_rad_s = armctl::joint_speed_limit_rad_s;
+	config.current_limit_a = armctl::joint_current_limit_a;
+#endif
 	const uint32_t epoch = stats.operation_epoch;
 	if (robstride_prepare_csp(shoulder, &config, epoch) != 0 ||
 	    robstride_prepare_csp(elbow, &config, epoch) != 0 ||
@@ -155,6 +167,18 @@ bool ready(const device *dev)
 	return true;
 }
 
+#ifdef ROBOT_ARM_BRINGUP
+dscrew::Config bringupWristConfig()
+{
+	dscrew::Config config{};
+	config.current_limit_a = 0.5F;
+	config.lift_rate_mm_s = -5.0F;
+	config.spin_step_rad = -5.0F * dscrew::pi / 180.0F;
+	config.stall_hold_a = 0.20F;
+	return config;
+}
+#endif
+
 } // namespace
 
 int main()
@@ -169,7 +193,10 @@ int main()
 		LOG_ERR("CAN start failed (%d)", ret);
 		return ret;
 	}
-	if (robomaster_transport_start(robomaster) != 0 ||
+	if (
+#ifndef ROBOT_ARM_BRINGUP
+	    robomaster_transport_start(robomaster) != 0 ||
+#endif
 	    robstride_transport_start(robstride) != 0 || gamepad_bridge_init(gamepad_uart) != 0 ||
 	    gamepad_bridge_start() != 0) {
 		LOG_ERR("transport startup failed");
@@ -182,21 +209,65 @@ int main()
 	if (!armctl::buildWorkspace(space)) {
 		return -EINVAL;
 	}
-	const armctl::JogLimits jog{armctl::jog_v_max, armctl::jog_a_max, armctl::joint_jog_v_max,
-				    armctl::joint_jog_a_max, 20.0F};
+	armctl::JogLimits jog{};
+#ifdef ROBOT_ARM_BRINGUP
+	jog.tool_v_max = 20.0F;
+	jog.tool_a_max = 50.0F;
+	jog.joint_v_max = 0.10F;
+	jog.joint_a_max = 0.30F;
+	jog.lift_mm_s = 5.0F;
+#else
+	jog.tool_v_max = armctl::jog_v_max;
+	jog.tool_a_max = armctl::jog_a_max;
+	jog.joint_v_max = armctl::joint_jog_v_max;
+	jog.joint_a_max = armctl::joint_jog_a_max;
+	jog.lift_mm_s = 20.0F;
+#endif
 	armctl::Controller controller(shoulder_joint, elbow_joint, armctl::kinematicsConfig(),
 				      armctl::transmissionConfig(), space, jog);
 	controller.setTorqueLimit(armctl::over_torque_nm);
+#ifndef ROBOT_ARM_BRINGUP
 	controller.emergencyStop();
+#endif
 
+#ifdef ROBOT_ARM_BRINGUP
+	dscrew::Wrist wrist(bringupWristConfig());
+	const int64_t boot_ms = k_uptime_get();
+	int64_t zero_since_ms = -1;
+	bool smoke_complete = false;
+#else
 	dscrew::Wrist wrist;
+#endif
 	robot_arm::InputLogic input_logic;
 	uint32_t servo_pulse_us = servo_center_us;
 	uint32_t tick = 0U;
 	bool enabled = false;
 
+#ifdef ROBOT_ARM_BRINGUP
+	LOG_INF("command-free smoke for %lld ms; outputs have not been commanded", command_free_ms);
+#else
 	LOG_INF("ready, outputs stopped; neutral x3 then Y home and A enable");
+#endif
 	while (true) {
+#ifdef ROBOT_ARM_BRINGUP
+		const int64_t now_ms = k_uptime_get();
+		if (!smoke_complete) {
+			if (now_ms - boot_ms < command_free_ms) {
+				k_sleep(K_USEC(control_period_us));
+				continue;
+			}
+			if (robomaster_transport_start(robomaster) != 0) {
+				LOG_ERR("C610 transport start failed");
+				return -EIO;
+			}
+			controller.emergencyStop();
+			(void)robomaster_c610_set_pair_current_a(wrist_right, wrist_left, 0.0F,
+								 0.0F);
+			zero_since_ms = now_ms;
+			smoke_complete = true;
+			LOG_INF("smoke complete; proving zero outputs for %lld ms", zero_prove_ms);
+		}
+#endif
 		gamepad_state pad{};
 		if (gamepad_bridge_get_state(&pad) != 0) {
 			controller.emergencyStop();
@@ -239,22 +310,34 @@ int main()
 			(void)wrist.setYawOrigin();
 			LOG_INF("home accepted while stopped");
 		}
-		if (actions.enable) {
+		if (actions.enable
+#ifdef ROBOT_ARM_BRINGUP
+		    && now_ms - zero_since_ms >= zero_prove_ms
+#endif
+		) {
 			enabled = prepareAndEnable(controller) && wrist_feedback;
 			LOG_INF("enable %s", enabled ? "accepted" : "rejected");
 		}
 
-		if (actions.servo_steps != 0) {
+		if (actions.servo_steps != 0
+#ifdef ROBOT_ARM_BRINGUP
+		    && enabled && pad.lt >= deadman_min && pad.rt < deadman_min
+#endif
+		) {
 			const uint32_t next = stepPulse(servo_pulse_us, actions.servo_steps);
 			if (servo_set_pulse(servo, next) == 0) {
 				servo_pulse_us = next;
 			}
 		}
 
-		if (enabled && pad.connected && input_logic.mode() == robot_arm::Mode::Hold) {
+		if (enabled && pad.connected && input_logic.mode() == robot_arm::Mode::Hold
+#ifdef ROBOT_ARM_BRINGUP
+		    && pad.rt >= deadman_min && pad.lt < deadman_min
+#endif
+		) {
 			controller.setToolVelocity(
-				{static_cast<float>(pad.lx) * axis_scale * armctl::jog_v_max,
-				 -static_cast<float>(pad.ly) * axis_scale * armctl::jog_v_max});
+				{static_cast<float>(pad.lx) * axis_scale * jog.tool_v_max,
+				 -static_cast<float>(pad.ly) * axis_scale * jog.tool_v_max});
 			(void)controller.startToolJog();
 		} else {
 			controller.setToolVelocity({});
@@ -266,7 +349,11 @@ int main()
 
 		if (++tick % wrist_divider == 0U) {
 			dscrew::Currents currents{};
-			if (enabled && wrist_feedback) {
+			if (enabled && wrist_feedback
+#ifdef ROBOT_ARM_BRINGUP
+			    && pad.rt >= deadman_min && pad.lt < deadman_min
+#endif
+			) {
 				const float lift =
 					actions.wrist_lift_up     ? wrist.config().lift_rate_mm_s
 					: actions.wrist_lift_down ? -wrist.config().lift_rate_mm_s
