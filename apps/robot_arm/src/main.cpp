@@ -307,6 +307,15 @@ int main()
 			robomaster_get_feedback_ex(wrist_left, &left_fb) == 0 &&
 			right_fb.continuous_valid && left_fb.continuous_valid &&
 			right_fb.raw.online && left_fb.raw.online;
+#ifdef ROBOT_ARM_BRINGUP
+		if (enabled && !wrist_feedback) {
+			controller.emergencyStop();
+			(void)robomaster_c610_set_pair_current_a(wrist_right, wrist_left, 0.0F,
+								 0.0F);
+			enabled = false;
+			LOG_ERR("wrist feedback lost; all motor outputs stopped");
+		}
+#endif
 		dscrew::NutAngles nuts{};
 		if (wrist_feedback) {
 			nuts.phi_r =
