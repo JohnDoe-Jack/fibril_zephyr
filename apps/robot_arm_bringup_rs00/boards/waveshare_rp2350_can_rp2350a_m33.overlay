@@ -1,0 +1,62 @@
+#include <zephyr/dt-bindings/pinctrl/rpi-pico-rp2350a-pinctrl.h>
+
+/ {
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+	};
+
+	aliases {
+		gamepad-uart = &uart1;
+	};
+
+	robstride: robstride-controller {
+		compatible = "robstride,controller";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		can = <&xl2515>;
+		master-id = <253>;
+		feedback-timeout-ms = <100>;
+		command-timeout-ms = <100>;
+		external-bus-management;
+		status = "okay";
+
+		shoulder: motor@1 {
+			compatible = "robstride,rs00";
+			reg = <1>;
+		};
+
+		elbow: motor@2 {
+			compatible = "robstride,rs00";
+			reg = <2>;
+		};
+	};
+};
+
+zephyr_udc0: &usbd {
+	status = "okay";
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+		label = "RS00 Bring-up";
+	};
+};
+
+&xl2515 {
+	status = "okay";
+};
+
+&pinctrl {
+	gamepad_uart1_rx_p21: gamepad_uart1_rx_p21 {
+		group0 {
+			pinmux = <UART1_RX_P21>;
+			input-enable;
+		};
+	};
+};
+
+&uart1 {
+	pinctrl-0 = <&gamepad_uart1_rx_p21>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	/delete-property/ hw-flow-control;
+	status = "okay";
+};
