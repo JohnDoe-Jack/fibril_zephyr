@@ -1,0 +1,21 @@
+config MOTOR_ROBSTRIDE
+	bool "RobStride RS00 motor driver"
+	default y
+	depends on CAN
+	depends on DT_HAS_ROBSTRIDE_CONTROLLER_ENABLED
+	help
+	  Enable the typed RobStride RS00 extended-CAN driver.
+
+if MOTOR_ROBSTRIDE
+
+config MOTOR_ROBSTRIDE_TX_STACK_SIZE
+	int "RobStride transmit worker stack size"
+	default 1280
+	range 768 8192
+
+config MOTOR_ROBSTRIDE_TX_THREAD_PRIORITY
+	int "RobStride transmit worker priority"
+	default 5
+	range -16 15
+
+endif

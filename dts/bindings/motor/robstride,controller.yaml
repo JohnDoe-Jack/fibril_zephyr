@@ -1,0 +1,23 @@
+description: RobStride motor controller transport
+
+compatible: "robstride,controller"
+
+include: motor-controller.yaml
+
+properties:
+  can:
+    type: phandle
+    required: true
+    description: Shared Classic CAN controller.
+  master-id:
+    type: int
+    default: 253
+  feedback-timeout-ms:
+    type: int
+    default: 100
+  command-timeout-ms:
+    type: int
+    default: 100
+  external-bus-management:
+    type: boolean
+    description: The application owns CAN start and stop.

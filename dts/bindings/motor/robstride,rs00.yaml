@@ -1,0 +1,12 @@
+description: RobStride RS00 motor
+
+compatible: "robstride,rs00"
+
+include: base.yaml
+
+on-bus: robstride,controller
+
+properties:
+  reg:
+    required: true
+    description: Motor CAN ID in the range 1 through 127.

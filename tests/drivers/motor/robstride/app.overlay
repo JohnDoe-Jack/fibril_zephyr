@@ -1,0 +1,27 @@
+/ {
+	test_can: fake-can {
+		compatible = "zephyr,fake-can";
+		status = "okay";
+	};
+
+	robstride_test: robstride-controller {
+		compatible = "robstride,controller";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		can = <&test_can>;
+		master-id = <253>;
+		feedback-timeout-ms = <100>;
+		command-timeout-ms = <100>;
+		external-bus-management;
+
+		rs00_1: motor@1 {
+			compatible = "robstride,rs00";
+			reg = <1>;
+		};
+
+		rs00_2: motor@2 {
+			compatible = "robstride,rs00";
+			reg = <2>;
+		};
+	};
+};
