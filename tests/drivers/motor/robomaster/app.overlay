@@ -15,19 +15,23 @@
 		#size-cells = <0>;
 		cans = <&test_can0 &test_can1>;
 		feedback-timeout-ms = <50>;
+		tx-period-us = <1000>;
+		command-timeout-ms = <100>;
 
 		motor0: motor@1 {
 			compatible = "dji,robomaster-motor";
 			reg = <1>;
-			model = "c620";
-			max-current = <10000>;
+			model = "c610";
+			max-current = <4000>;
+			rotor-speed-bound-rpm = <6000>;
 		};
 
 		motor1: motor@2 {
 			compatible = "dji,robomaster-motor";
 			reg = <2>;
-			model = "c620";
-			max-current = <10000>;
+			model = "c610";
+			max-current = <4000>;
+			rotor-speed-bound-rpm = <6000>;
 		};
 
 		motor3: motor@3 {

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <math.h>
 #include <string.h>
 
 #include <zephyr/device.h>
@@ -16,24 +17,27 @@
 #include <zephyr/ztest.h>
 
 #include <drivers/motor.h>
+#include <drivers/motor/robomaster.h>
 
-#define TEST_CAN_COUNT 2
-#define TEST_CAN0_NODE DT_NODELABEL(test_can0)
-#define TEST_CAN1_NODE DT_NODELABEL(test_can1)
-#define TEST_MOTOR0_NODE DT_NODELABEL(motor0)
-#define TEST_MOTOR1_NODE DT_NODELABEL(motor1)
-#define TEST_MOTOR2_NODE DT_NODELABEL(motor2)
-#define TEST_MOTOR3_NODE DT_NODELABEL(motor3)
+#define TEST_CAN_COUNT      2
+#define TEST_CAN0_NODE      DT_NODELABEL(test_can0)
+#define TEST_CAN1_NODE      DT_NODELABEL(test_can1)
+#define TEST_MOTOR0_NODE    DT_NODELABEL(motor0)
+#define TEST_MOTOR1_NODE    DT_NODELABEL(motor1)
+#define TEST_MOTOR2_NODE    DT_NODELABEL(motor2)
+#define TEST_MOTOR3_NODE    DT_NODELABEL(motor3)
+#define TEST_TRANSPORT_NODE DT_NODELABEL(robomaster_test)
 
-static const struct device * const test_can_devs[TEST_CAN_COUNT] = {
+static const struct device *const test_can_devs[TEST_CAN_COUNT] = {
 	DEVICE_DT_GET(TEST_CAN0_NODE),
 	DEVICE_DT_GET(TEST_CAN1_NODE),
 };
 
-static const struct device * const motor0 = DEVICE_DT_GET(TEST_MOTOR0_NODE);
-static const struct device * const motor1 = DEVICE_DT_GET(TEST_MOTOR1_NODE);
-static const struct device * const motor2 = DEVICE_DT_GET(TEST_MOTOR2_NODE);
-static const struct device * const motor3 = DEVICE_DT_GET(TEST_MOTOR3_NODE);
+static const struct device *const motor0 = DEVICE_DT_GET(TEST_MOTOR0_NODE);
+static const struct device *const motor1 = DEVICE_DT_GET(TEST_MOTOR1_NODE);
+static const struct device *const motor2 = DEVICE_DT_GET(TEST_MOTOR2_NODE);
+static const struct device *const motor3 = DEVICE_DT_GET(TEST_MOTOR3_NODE);
+static const struct device *const transport = DEVICE_DT_GET(TEST_TRANSPORT_NODE);
 
 struct captured_filter {
 	can_rx_callback_t callback;
@@ -140,19 +144,6 @@ static void wait_for_tx_flush(void)
 	k_msleep(2);
 }
 
-static int32_t wrapped_delta(uint16_t current, int32_t previous)
-{
-	int32_t delta = (int32_t)current - previous;
-
-	if (delta > 4096) {
-		delta -= 8192;
-	} else if (delta < -4096) {
-		delta += 8192;
-	}
-
-	return delta;
-}
-
 static void *robomaster_setup(void)
 {
 	zassert_true(device_is_ready(motor0), "motor0 not ready");
@@ -184,7 +175,9 @@ static void robomaster_before(void *fixture)
 
 static void expect_be16_slot(const struct can_frame *frame, int slot, int16_t value)
 {
-	zassert_equal((int16_t)sys_get_be16(&frame->data[slot * 2]), value, "slot %d mismatch", slot);
+	int16_t actual = (int16_t)sys_get_be16(&frame->data[slot * 2]);
+	zassert_equal(actual, value, "slot %d mismatch: actual %d expected %d", slot, actual,
+		      value);
 }
 
 static void inject_feedback(const struct device *can_dev, uint16_t can_id, uint16_t orientation,
@@ -249,7 +242,8 @@ ZTEST(robomaster_motor, test_enable_uses_cached_output_and_disable_clears_slot)
 
 	zassert_ok(motor_set_output(motor0, MOTOR_OUTPUT_MODE_CURRENT, 512));
 	wait_for_tx_flush();
-	zassert_true(captured_tx[0].group0_count > 0, "disabled motor should still flush zeroed frame");
+	zassert_true(captured_tx[0].group0_count > 0,
+		     "disabled motor should still flush zeroed frame");
 	expect_be16_slot(&captured_tx[0].group0_frame, 0, 0);
 
 	previous_group0_count = captured_tx[0].group0_count;
@@ -295,35 +289,112 @@ ZTEST(robomaster_motor, test_get_feedback_reports_no_data_and_stale)
 ZTEST(robomaster_motor, test_feedback_decode_and_wraparound)
 {
 	struct motor_feedback feedback;
-	struct motor_feedback previous;
-	int32_t expected_position;
-
-	if (motor_get_feedback(motor0, &previous) != -ENODATA) {
-		expected_position = previous.position + wrapped_delta(8000, previous.orientation);
-	} else {
-		expected_position = 8000;
-	}
 
 	inject_feedback(test_can_devs[0], 0x201, 8000, 120, 230, 55);
+	zassert_ok(robomaster_reset_continuous_position(motor0));
 	zassert_ok(motor_get_feedback(motor0, &feedback));
 	zassert_equal(feedback.valid_mask,
-		      MOTOR_FEEDBACK_CURRENT | MOTOR_FEEDBACK_VELOCITY |
-			      MOTOR_FEEDBACK_POSITION | MOTOR_FEEDBACK_ORIENTATION |
-			      MOTOR_FEEDBACK_TEMPERATURE,
+		      MOTOR_FEEDBACK_CURRENT | MOTOR_FEEDBACK_VELOCITY | MOTOR_FEEDBACK_POSITION |
+			      MOTOR_FEEDBACK_ORIENTATION,
 		      "unexpected valid mask");
 	zassert_equal(feedback.current, 230, "wrong current");
 	zassert_equal(feedback.velocity, 120, "wrong velocity");
 	zassert_equal(feedback.orientation, 8000, "wrong orientation");
-	zassert_equal(feedback.position, expected_position, "wrong initial position");
-	zassert_equal(feedback.temperature, 55, "wrong temperature");
+	zassert_equal(feedback.position, 0, "reset must establish the explicit origin");
+	zassert_equal(feedback.temperature, 0, "C610 temperature must not be exposed");
 
 	inject_feedback(test_can_devs[0], 0x201, 10, -10, -20, 56);
 	zassert_ok(motor_get_feedback(motor0, &feedback));
 	zassert_equal(feedback.orientation, 10, "wrong updated orientation");
-	zassert_equal(feedback.position, expected_position + 202, "wrong wrapped position");
+	zassert_equal(feedback.position, 202, "wrong wrapped position");
 	zassert_equal(feedback.current, -20, "wrong updated current");
 	zassert_equal(feedback.velocity, -10, "wrong updated velocity");
-	zassert_equal(feedback.temperature, 56, "wrong updated temperature");
+	zassert_equal(feedback.temperature, 0, "C610 temperature must remain invalid");
+}
+
+ZTEST(robomaster_motor, test_z1_c610_pair_current_golden_frame_and_validation)
+{
+	inject_feedback(test_can_devs[0], 0x201, 100, 0, 0, 99);
+	inject_feedback(test_can_devs[0], 0x202, 200, 0, 0, 99);
+	zassert_ok(motor_enable(motor0));
+	zassert_ok(motor_enable(motor1));
+	zassert_ok(robomaster_c610_set_pair_current_a(motor0, motor1, 4.0f, -4.0f));
+	wait_for_tx_flush();
+	zassert_true(captured_tx[0].group0_count > 0);
+	expect_be16_slot(&captured_tx[0].group0_frame, 0, 4000);
+	expect_be16_slot(&captured_tx[0].group0_frame, 1, -4000);
+	zassert_equal(captured_tx[0].group0_frame.flags, 0);
+	zassert_equal(can_dlc_to_bytes(captured_tx[0].group0_frame.dlc), 8);
+
+	zassert_equal(robomaster_c610_set_current_a(motor0, NAN), -EINVAL);
+	zassert_equal(robomaster_c610_set_current_a(motor0, INFINITY), -EINVAL);
+	zassert_equal(robomaster_c610_set_current_a(motor3, 1.0f), -ENOTSUP);
+}
+
+ZTEST(robomaster_motor, test_z2_continuous_position_reset_wrap_and_gap_latch)
+{
+	struct robomaster_feedback_ex feedback;
+	inject_feedback(test_can_devs[0], 0x201, 8000, 0, 0, 0);
+	zassert_ok(robomaster_reset_continuous_position(motor0));
+	inject_feedback(test_can_devs[0], 0x201, 10, 0, 0, 0);
+	zassert_ok(robomaster_get_feedback_ex(motor0, &feedback));
+	zassert_equal(feedback.continuous_count, 202);
+	zassert_true(feedback.continuous_valid);
+
+	k_msleep(5);
+	inject_feedback(test_can_devs[0], 0x201, 20, 0, 0, 0);
+	zassert_ok(robomaster_get_feedback_ex(motor0, &feedback));
+	zassert_false(feedback.continuous_valid);
+	uint32_t breaks = feedback.continuity_breaks;
+	inject_feedback(test_can_devs[0], 0x201, 21, 0, 0, 0);
+	zassert_ok(robomaster_get_feedback_ex(motor0, &feedback));
+	zassert_false(feedback.continuous_valid, "one good frame must not restore continuity");
+	zassert_equal(feedback.continuity_breaks, breaks);
+	zassert_ok(robomaster_reset_continuous_position(motor0));
+	zassert_ok(robomaster_get_feedback_ex(motor0, &feedback));
+	zassert_true(feedback.continuous_valid);
+}
+
+ZTEST(robomaster_motor, test_z3_invalid_frames_do_not_update_feedback)
+{
+	struct motor_feedback before;
+	struct motor_feedback after;
+	inject_feedback(test_can_devs[0], 0x201, 321, 0, 0, 0);
+	zassert_ok(motor_get_feedback(motor0, &before));
+
+	struct can_frame frame = {
+		.id = 0x201,
+		.dlc = can_bytes_to_dlc(8),
+		.flags = CAN_FRAME_IDE,
+	};
+	sys_put_be16(777, &frame.data[0]);
+	captured_filters[0].callback(test_can_devs[0], &frame, captured_filters[0].user_data);
+	zassert_ok(motor_get_feedback(motor0, &after));
+	zassert_equal(after.orientation, before.orientation);
+	zassert_equal(after.timestamp_ms, before.timestamp_ms);
+
+	frame.flags = 0;
+	sys_put_be16(8192, &frame.data[0]);
+	captured_filters[0].callback(test_can_devs[0], &frame, captured_filters[0].user_data);
+	zassert_ok(motor_get_feedback(motor0, &after));
+	zassert_equal(after.orientation, before.orientation);
+}
+
+ZTEST(robomaster_motor, test_z4_stop_clears_cached_nonzero_command)
+{
+	inject_feedback(test_can_devs[0], 0x201, 10, 0, 0, 0);
+	zassert_ok(motor_enable(motor0));
+	zassert_ok(robomaster_c610_set_current_a(motor0, 2.0f));
+	wait_for_tx_flush();
+	expect_be16_slot(&captured_tx[0].group0_frame, 0, 2000);
+
+	zassert_ok(robomaster_request_stop(transport, BIT(0)));
+	wait_for_tx_flush();
+	expect_be16_slot(&captured_tx[0].group0_frame, 0, 0);
+
+	zassert_ok(motor_enable(motor0));
+	wait_for_tx_flush();
+	expect_be16_slot(&captured_tx[0].group0_frame, 0, 0);
 }
 
 ZTEST(robomaster_motor, test_feedback_is_routed_by_can_bus_and_motor_id)
@@ -339,7 +410,7 @@ ZTEST(robomaster_motor, test_feedback_is_routed_by_can_bus_and_motor_id)
 	zassert_equal(feedback2.orientation, 1024, "wrong can1 orientation");
 	zassert_equal(feedback2.velocity, 77, "wrong can1 velocity");
 	zassert_equal(feedback2.current, 88, "wrong can1 current");
-	zassert_equal(feedback2.temperature, 40, "wrong can1 temperature");
+	zassert_equal(feedback2.temperature, 0, "C610 temperature must be invalid");
 }
 
 ZTEST(robomaster_motor, test_feedback_autodetects_can_bus_and_flushes_cached_output)
@@ -351,7 +422,8 @@ ZTEST(robomaster_motor, test_feedback_autodetects_can_bus_and_flushes_cached_out
 		      "auto-detect motor should not transmit on can1 before feedback");
 
 	zassert_ok(motor_enable(motor3));
-	zassert_equal(captured_tx[1].group0_count, 0, "enable should remain cached before feedback");
+	zassert_equal(captured_tx[1].group0_count, 0,
+		      "enable should remain cached before feedback");
 
 	inject_feedback(test_can_devs[1], 0x203, 2048, 33, 44, 41);
 	wait_for_tx_flush();
@@ -370,7 +442,8 @@ ZTEST(robomaster_motor, test_feedback_autodetects_can_bus_and_flushes_cached_out
 	reset_runtime_state();
 	inject_feedback(test_can_devs[0], 0x203, 3000, 99, 100, 42);
 	zassert_ok(motor_get_feedback(motor3, &feedback));
-	zassert_equal(feedback.orientation, 2048, "feedback from a different bus should be ignored");
+	zassert_equal(feedback.orientation, 2048,
+		      "feedback from a different bus should be ignored");
 
 	zassert_ok(motor_set_output(motor3, MOTOR_OUTPUT_MODE_CURRENT, -222));
 	wait_for_tx_flush();

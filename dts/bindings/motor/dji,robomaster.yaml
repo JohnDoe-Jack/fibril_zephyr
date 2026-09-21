@@ -17,3 +17,18 @@ properties:
     description: >
       Feedback is reported stale when no update has been received within this
       timeout.
+  tx-period-us:
+    type: int
+    default: 1000
+    description: Period between latest-wins group command transmissions.
+  command-timeout-ms:
+    type: int
+    default: 0
+    description: >
+      Maximum age of a newly submitted nonzero command. Zero preserves the
+      legacy behavior and disables command expiry.
+  external-bus-management:
+    type: boolean
+    description: >
+      Do not start or stop the CAN controller. The application owns the shared
+      bus and calls robomaster_transport_start after starting it.
