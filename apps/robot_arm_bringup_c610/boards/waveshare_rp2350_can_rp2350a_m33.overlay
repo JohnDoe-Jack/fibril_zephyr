@@ -1,0 +1,70 @@
+#include <zephyr/dt-bindings/pinctrl/rpi-pico-rp2350a-pinctrl.h>
+
+/ {
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+	};
+
+	aliases {
+		gamepad-uart = &uart1;
+	};
+
+	robomaster: robomaster-controller {
+		compatible = "dji,robomaster";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		cans = <&xl2515>;
+		feedback-timeout-ms = <100>;
+		tx-period-us = <1000>;
+		command-timeout-ms = <30>;
+		external-bus-management;
+		status = "okay";
+
+		wrist_right: motor@1 {
+			compatible = "dji,robomaster-motor";
+			reg = <1>;
+			model = "c610";
+			max-current = <500>;
+			rotor-speed-bound-rpm = <6000>;
+			gear-ratio = <36>;
+		};
+
+		wrist_left: motor@2 {
+			compatible = "dji,robomaster-motor";
+			reg = <2>;
+			model = "c610";
+			max-current = <500>;
+			rotor-speed-bound-rpm = <6000>;
+			gear-ratio = <36>;
+		};
+	};
+};
+
+zephyr_udc0: &usbd {
+	status = "okay";
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+		label = "C610 Bring-up";
+	};
+};
+
+&xl2515 {
+	status = "okay";
+};
+
+&pinctrl {
+	gamepad_uart1_rx_p21: gamepad_uart1_rx_p21 {
+		group0 {
+			pinmux = <UART1_RX_P21>;
+			input-enable;
+		};
+	};
+};
+
+&uart1 {
+	pinctrl-0 = <&gamepad_uart1_rx_p21>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	/delete-property/ hw-flow-control;
+	status = "okay";
+};
