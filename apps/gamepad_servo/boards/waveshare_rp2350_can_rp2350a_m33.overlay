@@ -36,6 +36,7 @@ zephyr_udc0: &usbd {
 	/* The fault-contained driver must not stop UART/PWM control even when the
 	 * CAN bus, controller interrupt, or SPI path fails.
 	 */
+	bitrate = <1000000>;
 	status = "okay";
 };
 

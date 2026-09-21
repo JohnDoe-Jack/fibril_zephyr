@@ -1,0 +1,6 @@
+tests:
+  apps.gamepad_servo.protocol:
+    tags: [can, protocol, servo]
+    integration_platforms:
+      - native_sim
+      - native_sim/native/64

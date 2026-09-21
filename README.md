@@ -101,7 +101,7 @@ west build -b <ボード名> app -- -DEXTRA_CONF_FILE=debug.conf   # 診断用 K
 
 | パス | 内容 |
 | --- | --- |
-| [samples/app/gamepad_servo](samples/app/gamepad_servo) | ESP-NOWゲームパッドのD-padでRP2350-CANのPWMサーボを操作し、RTTへ状態を表示 |
+| [apps/gamepad_servo](apps/gamepad_servo) | UARTゲームパッドまたはClassic CANからRP2350-CANのPWMサーボを操作し、USB CDCへ状態を表示 |
 | [samples/drivers/pwm_servo](samples/drivers/pwm_servo) | 汎用 PWM RC サーボのパルス・角度・停止の確認 |
 | [samples/drivers/amt21](samples/drivers/amt21) | AMT21x アブソリュートエンコーダの読み出し |
 | [samples/drivers/qdec](samples/drivers/qdec) | STM32 タイマでデコードした直交エンコーダの読み出し |

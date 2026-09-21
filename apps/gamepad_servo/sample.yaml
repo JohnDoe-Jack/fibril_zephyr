@@ -4,6 +4,6 @@ common:
   build_only: true
   integration_platforms:
     - waveshare_rp2350_can/rp2350a/m33
-  tags: [gamepad, servo, pwm, uart]
+  tags: [can, gamepad, servo, pwm, uart]
 tests:
   sample.app.gamepad_servo: {}
