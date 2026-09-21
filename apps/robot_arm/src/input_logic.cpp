@@ -81,4 +81,19 @@ Actions InputLogic::update(Input input, bool stopped)
 	return out;
 }
 
+bool TipServo::commandSteps(int steps)
+{
+	if (steps == 0) {
+		return false;
+	}
+	const uint32_t previous = pulse_us_;
+	if (steps < 0) {
+		pulse_us_ = pulse_us_ < min_pulse_us + step_us ? min_pulse_us : pulse_us_ - step_us;
+	} else {
+		pulse_us_ = pulse_us_ > max_pulse_us - step_us ? max_pulse_us : pulse_us_ + step_us;
+	}
+	active_ = true;
+	return pulse_us_ != previous;
+}
+
 } // namespace robot_arm

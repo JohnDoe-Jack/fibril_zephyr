@@ -26,10 +26,6 @@ namespace
 constexpr uint32_t control_period_us = 2000U;
 constexpr uint32_t wrist_divider = 5U;
 constexpr float axis_scale = 1.0F / 127.0F;
-constexpr uint32_t servo_min_us = 1000U;
-constexpr uint32_t servo_center_us = 1210U;
-constexpr uint32_t servo_max_us = 1400U;
-constexpr uint32_t servo_step_us = 5U;
 
 const device *const can_dev = DEVICE_DT_GET(DT_NODELABEL(xl2515));
 const device *const robomaster = DEVICE_DT_GET(DT_NODELABEL(robomaster));
@@ -114,17 +110,6 @@ class Rs00Joint final: public armctl::JointDrive
 	const device *transport_;
 };
 
-uint32_t stepPulse(uint32_t pulse, int steps)
-{
-	if (steps < 0) {
-		return pulse < servo_min_us + servo_step_us ? servo_min_us : pulse - servo_step_us;
-	}
-	if (steps > 0) {
-		return pulse > servo_max_us - servo_step_us ? servo_max_us : pulse + servo_step_us;
-	}
-	return pulse;
-}
-
 bool prepareAndEnable(armctl::Controller &controller)
 {
 	robstride_transport_stats stats{};
@@ -191,7 +176,7 @@ int main()
 
 	dscrew::Wrist wrist;
 	robot_arm::InputLogic input_logic;
-	uint32_t servo_pulse_us = servo_center_us;
+	robot_arm::TipServo tip_servo;
 	uint32_t tick = 0U;
 	bool enabled = false;
 
@@ -245,10 +230,8 @@ int main()
 		}
 
 		if (actions.servo_steps != 0) {
-			const uint32_t next = stepPulse(servo_pulse_us, actions.servo_steps);
-			if (servo_set_pulse(servo, next) == 0) {
-				servo_pulse_us = next;
-			}
+			(void)tip_servo.commandSteps(actions.servo_steps);
+			(void)servo_set_pulse(servo, tip_servo.pulseUs());
 		}
 
 		if (enabled && pad.connected && input_logic.mode() == robot_arm::Mode::Hold) {

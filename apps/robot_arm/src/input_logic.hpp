@@ -51,4 +51,27 @@ class InputLogic
 	Mode mode_ = Mode::Hold;
 };
 
+class TipServo
+{
+      public:
+	static constexpr uint32_t min_pulse_us = 1000U;
+	static constexpr uint32_t center_pulse_us = 1210U;
+	static constexpr uint32_t max_pulse_us = 1400U;
+	static constexpr uint32_t step_us = 5U;
+
+	bool commandSteps(int steps);
+	bool active() const
+	{
+		return active_;
+	}
+	uint32_t pulseUs() const
+	{
+		return pulse_us_;
+	}
+
+      private:
+	uint32_t pulse_us_ = center_pulse_us;
+	bool active_ = false;
+};
+
 } // namespace robot_arm
