@@ -1,0 +1,9 @@
+sample:
+  name: Differential screw wrist hardware bring-up
+common:
+  build_only: true
+  platform_allow:
+    - waveshare_rp2350_can/rp2350a/m33
+tests:
+  sample.robot_arm_bringup_wrist: {}
+
