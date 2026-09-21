@@ -47,7 +47,8 @@ static inline int servo_set_angle(const struct device * dev, float angle_deg)
     return -ENODEV;
   }
 
-  const struct servo_driver_api * api = dev->api;
+  const struct servo_driver_api * api =
+    (const struct servo_driver_api *)dev->api;
   return api->set_angle(dev, angle_deg);
 }
 
@@ -68,7 +69,8 @@ static inline int servo_set_pulse(const struct device * dev, uint32_t pulse_us)
     return -ENODEV;
   }
 
-  const struct servo_driver_api * api = dev->api;
+  const struct servo_driver_api * api =
+    (const struct servo_driver_api *)dev->api;
   return api->set_pulse(dev, pulse_us);
 }
 
@@ -88,7 +90,8 @@ static inline int servo_disable(const struct device * dev)
     return -ENODEV;
   }
 
-  const struct servo_driver_api * api = dev->api;
+  const struct servo_driver_api * api =
+    (const struct servo_driver_api *)dev->api;
   return api->disable(dev);
 }
 
