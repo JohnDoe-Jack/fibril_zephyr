@@ -4,7 +4,8 @@ DJI の RoboMaster モータコントローラ C610 と C620 を CAN 経由で�
 モータ 1 台が 1 つの device として現れ、電流指令と feedback スナップショットを扱う。
 
 共通のモータインタフェースは [include/drivers/motor.h](../../include/drivers/motor.h) にある。
-このドライバに固有の公開 API はない。
+型付きの C610・連続角・transport API は
+`include/drivers/motor/robomaster.h` にある。
 
 ## デバイスの構成
 
@@ -20,12 +21,16 @@ robomaster_controller: robomaster-controller {
         #size-cells = <0>;
         cans = <&fdcan2 &fdcan3>;
         feedback-timeout-ms = <100>;
+        tx-period-us = <10000>;
+        command-timeout-ms = <100>;
+        external-bus-management;
 
         motor_front_left: motor@1 {
                 compatible = "dji,robomaster-motor";
                 reg = <1>;
                 model = "c620";
-                max-current = <10000>;
+                max-current = <4000>;
+                rotor-speed-bound-rpm = <6000>;
         };
 };
 ```
@@ -37,9 +42,8 @@ robomaster_controller: robomaster-controller {
 モータノードの `reg` がモータ ID で、範囲は 1 から 8 である。
 `max-current` を省略すると 10000 になる。
 
-`model` と `gear-ratio` はどちらも config に保持されるだけで、ドライバは読まない。
-C610 と C620 は同じ扱いになる。
-上位の制御側がメタデータとして参照するためのプロパティである。
+`model` は C610 の A 単位 helper と温度の有効性に使う。C610 の command は
+1000 count/A で、feedback current の A 換算は行わない。
 
 ## Kconfig
 
@@ -49,7 +53,7 @@ C610 と C620 は同じ扱いになる。
 
 ## 送信
 
-トランスポートは 1 ms 周期のタイマーでワークをキューに積み、そのワークが指令フレームを送る。
+トランスポートは `tx-period-us` 周期（既定 1 ms）で専用 worker に最新値を渡す。
 
 モータ ID はグループ 2 つに分かれ、それぞれ 1 つの CAN フレームに 4 台ぶんの電流指令が入る。
 
@@ -61,8 +65,8 @@ C610 と C620 は同じ扱いになる。
 各スロットは符号付き 16 ビットのビッグエンディアンである。
 そのグループに属するモータが 1 台もそのバスにいなければ、フレームは送らない。
 
-`can_send()` は `K_NO_WAIT` で呼び、戻り値を見ない。
-バスが混んでいて送れなかったフレームは、次のタイマー刻みで送り直される。
+`can_send()` は callback 付き `K_NO_WAIT` で呼ぶ。即時失敗と非同期完了を別に
+数え、同じ送信 context が完了するまで同じ bus/group を重ねない。
 
 ## CAN バスの自動検出
 
@@ -79,25 +83,28 @@ C610 と C620 は同じ扱いになる。
 
 受信フィルタは ID `0x200`、マスク `0x7F0` で登録する。
 `0x201` から `0x208` のフレームをモータ ID 1 から 8 に対応させ、それ以外は捨てる。
-7 バイト未満のフレームも捨てる。
+standard data frame、DLC 8、角度 0..8191 だけを受理する。IDE/RTR/FDF/BRS、
+短い frame、範囲外角度は timestamp を含めて更新しない。
 
 | バイト | 内容 |
 | --- | --- |
 | 0 から 1 | 機械角（0 から 8191、ビッグエンディアン） |
 | 2 から 3 | 速度（符号付き 16 ビット） |
 | 4 から 5 | 電流（符号付き 16 ビット） |
-| 6 | 温度 |
+| 6 | C620 の温度。C610 では無効 |
 
 値はモータコントローラの生の単位のままスナップショットに入る。
 ドライバはスケーリングをしない。
 `max-current` も同じ生の単位で解釈される。
 
-`struct motor_feedback` の `valid_mask` には、電流、速度、位置、機械角、温度のすべてが立つ。
+C610 の `valid_mask` には温度を立てない。C620 は従来どおり温度を公開する。
 
 ### 位置の積算
 
 `orientation` は受信した機械角そのままで、1 回転で 0 から 8191 を巡る。
-`position` はその差分を積算した値で、8192 の折り返しを跨ぐときに補正する（差分が 4096 を超えたら 8192 を引き、-4096 を下回ったら足す）。
+精密な積算値は `robomaster_get_feedback_ex()` の signed 64-bit count で取得する。
+受信 gap・速度上限違反で continuity はラッチして失効し、明示 reset まで戻らない。
+従来の signed 32-bit `position` は互換用の飽和値である。
 
 最初の feedback フレームでは、`position` の初期値として機械角の生の値をそのまま入れる。
 0 から始まるわけではないので、起動後の変位を見たい場合は最初の読み値を基準として引く。
@@ -111,6 +118,15 @@ C610 と C620 は同じ扱いになる。
 `motor_set_output()` が受け付けるのは `MOTOR_OUTPUT_MODE_CURRENT` と、その別名である `MOTOR_OUTPUT_MODE_TORQUE` だけである。
 速度モードと電圧モードには `-ENOTSUP` を返す。
 値は `±max-current` に飽和させてから保持する。
+
+`robomaster_c610_set_pair_current_a()` は同じ transport の左右値を一つの lock で
+commitする。`robomaster_request_stop()` は cache をゼロにし、通常 command と別の
+停止ラッチを立てる。`command-timeout-ms` が非ゼロなら、最後の新規 command から
+期限切れ後はゼロへ移り、明示 enable まで非ゼロを再開しない。
+
+共有 CAN では `external-bus-management` を指定する。この場合 driver は CAN を
+start/stopせず、bus owner が start 後に `robomaster_transport_start()` を呼ぶ。
+未指定時の初期 start と 500 ms retry は従来互換である。
 
 `motor_get_feedback()` は戻り値に関わらずスナップショットを書き込む。
 

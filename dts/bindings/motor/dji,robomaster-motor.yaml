@@ -19,7 +19,14 @@ properties:
     description: Motor controller model.
   max-current:
     type: int
-    description: Maximum absolute current command accepted by this motor node.
+    description: >
+      Maximum absolute raw command. For C610, 1000 raw counts represent 1 A.
+  rotor-speed-bound-rpm:
+    type: int
+    default: 10000
+    description: >
+      Maximum absolute rotor speed used to validate continuous position. The
+      maximum feedback gap is floor(30000 / rpm) - 1 milliseconds.
   gear-ratio:
     type: int
     description: Optional motor gear ratio metadata for higher-level control.
